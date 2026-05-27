@@ -42,3 +42,17 @@ class PersonaRead(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+    
+
+class PersonaActivaRead(BaseModel):
+    """
+    Reduced schema for active users report.
+    Only exposes required fields for the report endpoint.
+    """
+
+    id: int
+    email: EmailStr
+    phone: str | None
+    is_active: bool
+
+    model_config = {"from_attributes": True}
