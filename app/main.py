@@ -103,3 +103,54 @@ def obtener_estadisticas_edad(db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")   
+@app.get("/personas/cumpleanios/mes/{numero_mes}", tags=["Analítica Iván"])
+def obtener_cumpleanos_mes(numero_mes: str, db: Session = Depends(get_db)):
+    """
+    Retorna el listado de personas que cumplen años en un mes específico.
+    Incluye validación estricta del parámetro de entrada (HTTP 400).
+    """
+    # 1. VALIDACIÓN DEFENSIVA (El Escudo)
+    # Intentamos convertir lo que el usuario escribió en la URL a un número entero.
+    try:
+        mes_entero = int(numero_mes)
+        if mes_entero < 1 or mes_entero > 12:
+            raise ValueError() # Forzamos el error si pone un 13 o un 0
+    except ValueError:
+        # Si puso letras (ej. 'abc') o números fuera de rango, lanzamos el Error 400 exacto del PDF.
+        raise HTTPException(
+            status_code=400, 
+            detail="El mes debe ser un entero entre 1 y 12."
+        )
+
+    # 2. CONSULTA SQL PARAMETRIZADA
+    # Usamos :mes para inyectar el número de forma segura y evitar hackeos (SQL Injection).
+    query_sql = text("""
+        SELECT 
+            id, first_name, last_name, email, phone, birth_date, is_active, notes
+        FROM personas
+        WHERE MONTH(birth_date) = :mes;
+    """)
+
+    try:
+        # 3. Ejecutamos la consulta pasándole el mes validado
+        resultado = db.execute(query_sql, {"mes": mes_entero}).fetchall()
+        
+        # 4. Formateamos la respuesta a una lista de diccionarios
+        lista_cumpleaneros = []
+        for fila in resultado:
+            persona = {
+                "id": fila[0],
+                "first_name": fila[1],
+                "last_name": fila[2],
+                "email": fila[3],
+                "phone": fila[4],
+                "birth_date": str(fila[5]) if fila[5] else None, # Convertimos fecha a texto
+                "is_active": bool(fila[6]), # Convertimos 1/0 a True/False
+                "notes": fila[7]
+            }
+            lista_cumpleaneros.append(persona)
+            
+        return lista_cumpleaneros
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
