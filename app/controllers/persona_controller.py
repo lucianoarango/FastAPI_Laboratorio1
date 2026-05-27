@@ -1,9 +1,13 @@
 from typing import List
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
-
 from ..database import get_db
-from ..views.persona import PersonaCreate, PersonaUpdate, PersonaRead
+from ..views.persona import (
+    PersonaCreate,
+    PersonaUpdate,
+    PersonaRead,
+    PersonaActivaRead
+) # Import reduced response schema for active users report, that's "PersonaActivaRead"
 from ..services import persona_service
 
 router = APIRouter(prefix="/personas", tags=["personas"])
@@ -34,6 +38,16 @@ def search_personas(termino: str, db: Session = Depends(get_db)):
     
     # Delegate search logic to service layer
     return persona_service.search_personas(db, termino)
+
+
+@router.get("/reporte/activos", response_model=List[PersonaActivaRead])
+def get_active_personas_report(db: Session = Depends(get_db)):
+    """
+    Return a reduced report containing only active users.
+    """
+
+    # Delegate report logic to service layer
+    return persona_service.get_active_personas_report(db)
 
 
 @router.get("/{persona_id}", response_model=PersonaRead)
