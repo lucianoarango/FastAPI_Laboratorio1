@@ -1,6 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 from .database import engine
 from .database import Base
+from .database import get_db
 from .controllers import persona_controller
 from .error_handlers import register_exception_handlers
 
@@ -26,3 +29,38 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+from sqlalchemy import text 
+
+@app.get("/personas/estadisticas/dominios", tags=["Analítica Iván"])
+def obtener_estadisticas_dominios(db: Session = Depends(get_db)):
+    """
+    Retorna la cantidad de personas registradas agrupadas por el dominio de su correo electrónico.
+    """
+    # 1. Consulta SQL para cortar el correo desde el '@' y contar
+    query_sql = text("""
+        SELECT 
+            SUBSTRING_INDEX(email, '@', -1) AS dominio,
+            COUNT(*) AS cantidad
+        FROM personas
+        WHERE email IS NOT NULL AND email LIKE '%@%'
+        GROUP BY dominio
+        ORDER BY cantidad DESC;
+    """)
+
+    try:
+        # 2. Ejecutamos la consulta en MySQL
+        resultado = db.execute(query_sql).fetchall()
+        
+        # 3. Formateamos la respuesta al JSON exacto que pide el PDF
+        respuesta_json = {}
+        for fila in resultado:
+            dominio = fila[0]  # Ej: 'gmail.com'
+            cantidad = fila[1] # Ej: 150
+            respuesta_json[dominio] = cantidad
+            
+        return respuesta_json
+
+    except Exception as e:
+
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
