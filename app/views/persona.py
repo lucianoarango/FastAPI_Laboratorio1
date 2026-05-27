@@ -46,7 +46,7 @@ class PersonaRead(BaseModel):
 
 class PersonaActivaRead(BaseModel):
     """
-    Reduced schema for active users report.
+    Schema used for active users report responses.
     Only exposes required fields for the report endpoint.
     """
 
