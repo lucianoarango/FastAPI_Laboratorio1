@@ -26,6 +26,16 @@ def list_personas(
     return persona_service.list_personas(db, skip=skip, limit=limit)
 
 
+@router.get("/buscar/{termino}", response_model=List[PersonaRead])
+def search_personas(termino: str, db: Session = Depends(get_db)):
+    """
+    Search personas by first name, last name or email.
+    """
+    
+    # Delegate search logic to service layer
+    return persona_service.search_personas(db, termino)
+
+
 @router.get("/{persona_id}", response_model=PersonaRead)
 def get_persona(persona_id: int, db: Session = Depends(get_db)):
     """Retrieve a Persona by ID via service layer."""

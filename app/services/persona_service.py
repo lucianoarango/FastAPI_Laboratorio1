@@ -1,3 +1,4 @@
+from sqlalchemy import or_
 from typing import Sequence
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -76,3 +77,26 @@ def delete_persona(db: Session, persona_id: int) -> None:
         raise PersonaNotFoundError()
     db.delete(obj)
     db.commit()
+
+    
+def search_personas(db: Session, termino: str):
+    """
+    Search personas by first name, last name or email.
+
+    The search is case-insensitive and uses OR conditions,
+    allowing the term to match any of the three fields.
+    
+    """
+
+    # Search across multiple fields using OR
+    return (
+        db.query(Persona)
+        .filter(
+            or_(
+                Persona.first_name.ilike(f"%{termino}%"),
+                Persona.last_name.ilike(f"%{termino}%"),
+                Persona.email.ilike(f"%{termino}%")
+            )
+        )
+        .all()
+    )
