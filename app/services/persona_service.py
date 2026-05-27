@@ -100,3 +100,18 @@ def search_personas(db: Session, termino: str):
         )
         .all()
     )
+
+
+def get_active_personas_report(db: Session):
+    """
+    Return only active personas with reduced fields.
+
+    This endpoint is used as a lightweight report,
+    exposing only the required attributes.
+    """
+
+    return (
+        db.query(Persona)
+        .filter(Persona.is_active == True)
+        .all()
+    )
