@@ -115,3 +115,45 @@ def get_active_personas_report(db: Session):
         .filter(Persona.is_active == True)
         .all()
     )
+
+
+def bulk_deactivate_personas(db: Session, ids: list[int]):
+    """
+    Deactivate multiple personas in a single operation.
+
+    The function:
+    - Validates existing IDs
+    - Deactivates only found personas
+    - Reports missing IDs without failing
+    """
+
+    # Get all personas that exist in database
+    personas = (
+        db.query(Persona)
+        .filter(Persona.id.in_(ids))
+        .all()
+    )
+
+    # Extract IDs that actually exist
+    found_ids = [persona.id for persona in personas]
+
+    # Identify IDs that were not found
+    not_found_ids = [
+        persona_id for persona_id in ids
+        if persona_id not in found_ids
+    ]
+
+    # Deactivate found personas
+    for persona in personas:
+        persona.is_active = False
+
+    # Save changes in database
+    db.commit()
+
+    # Return response structure
+    return {
+        "message": "Operación completada.",
+        "desactivados": found_ids,
+        "no_encontrados": not_found_ids,
+        "total_desactivados": len(found_ids)
+    }
