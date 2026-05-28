@@ -44,6 +44,23 @@ class PersonaRead(BaseModel):
     model_config = {"from_attributes": True}
     
 
+class PersonasPoblarRequest(BaseModel):
+    """Request body for creating many 'Personas' with Faker-generated data."""
+    cantidad: int = Field(..., description="Number of 'personas' to generate. Valid Range: 1 to 1000.")
+
+
+class PersonasPoblarResponse(BaseModel):
+    """Response returned after the massive Faker load finishes."""
+    message: str
+    status: int
+
+
+class PersonasResetResponse(BaseModel):
+    """Response returned after deleting all 'personas' records."""
+    message: str
+    deleted_count: int
+
+
 class PersonaActivaRead(BaseModel):
     """
     Schema used for active users report responses.
@@ -75,3 +92,5 @@ class BulkDeactivateResponse(BaseModel):
     desactivados: list[int]
     no_encontrados: list[int]
     total_desactivados: int    
+
+

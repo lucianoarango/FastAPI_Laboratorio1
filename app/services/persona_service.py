@@ -1,11 +1,57 @@
-from sqlalchemy import or_
+import csv
+import random
+import re
+import unicodedata
+from collections.abc import Iterator
+from io import StringIO
 from typing import Sequence
+
+from faker import Faker
+from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from ..models.persona import Persona
 from ..views.persona import PersonaCreate, PersonaUpdate
 from .errors import PersonaNotFoundError, EmailAlreadyExistsError
+
+fake = Faker("es_CO")
+REAL_EMAIL_DOMAINS = ("gmail.com", "outlook.com", "hotmail.com", "yahoo.com")
+CSV_COLUMNS = ("id", "first_name", "last_name", "email", "phone", "birth_date", "is_active", "notes")
+
+
+
+def _normalize_email_part(value: str) -> str:
+    """Normalize names so Faker emails keep a clean nombre.apellido format."""
+    without_accents = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "", without_accents.lower()) or "persona"
+
+
+def _build_unique_email(first_name: str, last_name: str, used_emails: set[str]) -> str:
+    """Build an email with a real domain and avoid collisions with existing records."""
+    first = _normalize_email_part(first_name)
+    last = _normalize_email_part(last_name)
+    domain = random.choice(REAL_EMAIL_DOMAINS)
+
+
+    #Try the requested nombre.apellido@dominio format first.
+    email = f"{first}.{last}@{domain}"
+    if email not in used_emails:
+        used_emails.add(email)
+        return email
+    
+    #If the same generated name already exists, add a shor numeric suffix.
+    while True: 
+        emial = f"{first}.{last}.{random.randint(1000, 9999)}@{domain}"
+        if email not in used_emails:
+            used_emails.add(email)
+            return email
+        
+
+def _build_colombian_phone() -> str:
+    """Return a realistic Colombian mobile phone number."""
+    prefix = random.choice(("300", "301", "302", "310", "311", "312", "313", "314", "315", "316", "317", "310", "321"))
+    return f"+57 {prefix} {random.randint(100,999)} {random.randint(1000,9999)}"
 
 
 def create_persona(db: Session, payload: PersonaCreate) -> Persona:
@@ -38,47 +84,75 @@ def list_personas(db: Session, skip: int = 0, limit: int = 100) -> Sequence[Pers
     return db.query(Persona).offset(skip).limit(limit).all()
 
 
-def get_persona(db: Session, persona_id: int) -> Persona:
-    """Return Persona by ID or raise if not found."""
-    obj = db.query(Persona).filter(Persona.id == persona_id).first()
-    if not obj:
-        raise PersonaNotFoundError()
-    return obj
+def poblar_personas(db: Session, cantidad: int) -> int:
+    """Create many 'Personas' using Faker data and commit them in one trasaction."""
+    used_emails = {email for (email,) in db.query(Persona.email).all()}
+    personas: list[Persona] = []
 
 
-def update_persona(db: Session, persona_id: int, payload: PersonaUpdate) -> Persona:
-    """Update Persona partially, enforcing unique email."""
-    obj = db.query(Persona).filter(Persona.id == persona_id).first()
-    if not obj:
-        raise PersonaNotFoundError()
-
-    data = payload.model_dump(exclude_unset=True)
-    if "email" in data and data["email"] != obj.email:
-        if db.query(Persona).filter(Persona.email == data["email"], Persona.id != persona_id).first():
-            raise EmailAlreadyExistsError()
-
-    for field, value in data.items():
-        setattr(obj, field, value)
-
-    db.add(obj)
+    for _ in range(cantidad):
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        personas.append(
+            Persona(
+                first_name=first_name,
+                last_name=last_name,
+                email=_build_unique_email(first_name, last_name, used_emails),
+                phone=_build_colombian_phone(),
+                birth_date=fake.date_of_birth(minimum_age=18, maximum_age=85),
+                is_active=random.choice((True, False)),
+                notes=random.choice((fake.sentence(nb_words=8), None)), 
+            )
+        )
+    
+    db.add_all(personas)
     try:
         db.commit()
     except IntegrityError as e:
         db.rollback()
         raise EmailAlreadyExistsError() from e
-    db.refresh(obj)
-    return obj
-
-
-def delete_persona(db: Session, persona_id: int) -> None:
-    """Delete Persona by ID or raise if not found."""
-    obj = db.query(Persona).filter(Persona.id == persona_id).first()
-    if not obj:
-        raise PersonaNotFoundError()
-    db.delete(obj)
-    db.commit()
-
     
+    return len(personas)
+    
+
+def reset_personas(db: Session) -> int:
+    """Delete every 'persona' record, reset MySQL auto-increment and return deleted rows."""
+    deleted_count = db.query(Persona).delete(synchronize_session=False)
+
+    # MySQL doesn't reset AUTO_INCREMENT afer DELETE, so the next insert would continue
+    # from the previous highest id. This makes the lab restart cleanly from id 1.
+    db.execute(text("ALTER TABLE personas AUTO_INCREMENT = 1"))
+    
+    db.commit()
+    return deleted_count
+
+
+def build_personas_csv(db: Session) -> StringIO:
+    """Build a complete CSV file with all 'Persona' records."""
+    output = StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(CSV_COLUMNS)
+
+    personas = db.query(Persona).order_by(Persona.id).all()
+    for persona in personas:
+        writer.writerow(
+            [
+                persona.id,
+                persona.first_name,
+                persona.last_name,
+                persona.email,
+                persona.phone or "",
+                persona.birth_date.isoformat() if persona.birth_date else "",
+                "True" if persona.is_active else "False",
+                persona.notes or "",
+            ]
+        )
+    
+    output.seek(0)
+    return output
+
+
 def search_personas(db: Session, termino: str):
     """
     Search personas by first name, last name or email.
@@ -157,3 +231,47 @@ def bulk_deactivate_personas(db: Session, ids: list[int]):
         "no_encontrados": not_found_ids,
         "total_desactivados": len(found_ids)
     }
+
+
+
+def get_persona(db: Session, persona_id: int) -> Persona:
+    """Return Persona by ID or raise if not found."""
+    obj = db.query(Persona).filter(Persona.id == persona_id).first()
+    if not obj:
+        raise PersonaNotFoundError()
+    return obj
+
+
+def update_persona(db: Session, persona_id: int, payload: PersonaUpdate) -> Persona:
+    """Update Persona partially, enforcing unique email."""
+    obj = db.query(Persona).filter(Persona.id == persona_id).first()
+    if not obj:
+        raise PersonaNotFoundError()
+
+    data = payload.model_dump(exclude_unset=True)
+    if "email" in data and data["email"] != obj.email:
+        if db.query(Persona).filter(Persona.email == data["email"], Persona.id != persona_id).first():
+            raise EmailAlreadyExistsError()
+
+    for field, value in data.items():
+        setattr(obj, field, value)
+
+    db.add(obj)
+    try:
+        db.commit()
+    except IntegrityError as e:
+        db.rollback()
+        raise EmailAlreadyExistsError() from e
+    db.refresh(obj)
+    return obj
+
+
+def delete_persona(db: Session, persona_id: int) -> None:
+    """Delete Persona by ID or raise if not found."""
+    obj = db.query(Persona).filter(Persona.id == persona_id).first()
+    if not obj:
+        raise PersonaNotFoundError()
+    db.delete(obj)
+    db.commit()
+
+    

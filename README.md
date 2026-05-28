@@ -132,6 +132,180 @@ curl -X GET "http://127.0.0.1:8000/personas/buscar/lopez"
 ## Descripción
 
 Retorna únicamente usuarios activos (`is_active = true`) usando una proyección reducida para optimizar la respuesta.
+## Endpoints principales
+
+- `GET /health` → estado del servicio
+- `POST /personas` → crear persona
+- `GET /personas` → listar personas (`skip`, `limit`)
+- `GET /personas/{id}` → obtener persona por ID
+- `PUT /personas/{id}` → actualizar (parcial) persona
+- `DELETE /personas/{id}` → eliminar persona
+- `POST /personas/poblar` → crear personas masivamente con Faker
+- `DELETE /personas/reset` → eliminar todos los registros de personas
+- `GET /personas/exportar/csv` → descargar todos los registros en CSV
+
+### Esquemas (JSON)
+
+- Crear:
+  ```json
+  {
+    "first_name": "Juan",
+    "last_name": "Pérez",
+    "email": "juan.perez@example.com",
+    "phone": "+57 3000000000",
+    "birth_date": "1990-05-20",
+    "is_active": true,
+    "notes": "Cliente frecuente"
+  }
+  ```
+
+- Actualizar (parcial):
+  ```json
+  {
+    "email": "juan.perez2@example.com",
+    "notes": "Actualizado"
+  }
+  ```
+
+## Colección de Postman
+
+Importa `FastAPI-CRUD-Demo.postman_collection.json` en Postman. Variables:
+
+- `base_url` (por defecto `http://localhost:8000`)
+- `persona_id` (por defecto `1`)
+
+## Notas
+
+- Las tablas se crean automáticamente al iniciar (solo con fines de demo).
+- Asegúrate de crear la base de datos en MySQL y de que el usuario tenga permisos (por ejemplo, `CREATE DATABASE fastapi_demo;`).
+
+## Estructura MVC
+
+- `app/models/` → modelos SQLAlchemy (por ejemplo, `persona.py`).
+- `app/views/` → esquemas Pydantic (por ejemplo, `persona.py`).
+- `app/controllers/` → routers/controladores FastAPI (por ejemplo, `persona_controller.py`).
+
+## Pruebas rápidas (curl)
+
+```bash
+# Health
+
+curl -s http://127.0.0.1:8000/health
+
+# Crear persona
+
+curl -s -X POST http://127.0.0.1:8000/personas \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "first_name":"Juan",
+    "last_name":"Perez",
+    "email":"juan.perez@example.com",
+    "phone":"+57 3000000000",
+    "birth_date":"1990-05-20",
+    "is_active":true,
+    "notes":"Cliente frecuente"
+  }'
+
+# Listar
+
+curl -s http://127.0.0.1:8000/personas
+
+# Obtener por ID
+
+curl -s http://127.0.0.1:8000/personas/1
+
+# Actualizar parcial
+
+curl -s -X PUT http://127.0.0.1:8000/personas/1 \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"juan.perez2@example.com","notes":"Actualizado"}'
+
+# Eliminar
+
+curl -s -X DELETE http://127.0.0.1:8000/personas/1 -i
+
+# Poblar 50 personas con Faker
+
+curl -s -X POST http://127.0.0.1:8000/personas/poblar \
+  -H 'Content-Type: application/json' \
+  -d '{"cantidad":50}'
+
+
+# Descargar CSV
+
+curl -s -OJ http://127.0.0.1:8000/personas/exportar/csv
+
+
+# Resetear tabla de personas
+
+curl -s -X DELETE http://127.0.0.1:8000/personas/reset
+```
+
+
+## Endpoints desarrollados por Luciano 
+
+- `POST /personas/poblar`: recibe `{"cantidad": 50}` y crea entre 1 y 1000 personas usando Faker. Los correos se generan con dominios reales como `gmail.com`, `outlook.com`, `hotmail.com` y `yahoo.com`.
+- `DELETE /personas/reset`: elimina todos los registros de la tabla `personas` y retorna cuantas filas fueron borradas.
+- `GET /personas/exportar/csv`: descarga `personas.csv` con los campos `id`, `first_name`, `last_name`, `email`, `phone`, `birth_date`, `is_active` y `notes`.
+
+### Verificacion de CSV y reset
+
+Antes de exportar el CSV debe existir información en la tabla. Entonces primero puedes poblar algunos datos: 
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/personas/poblar \
+  -H 'Content-Type: application/json' \
+  -d '{"cantidad":10}'
+```
+
+Luego exporta el CSV: 
+
+```bash 
+curl -OJ http://127.0.0.1:8000/personas/exportar/csv
+```
+
+El archivo `personas.csv` debe incluir encabezados y registros:
+
+```csv
+id,first_name,last_name,email,phone,birth_date,is_active,notes
+1,Maria,Lopez,maria.lopez@gmail.com,+57  300 123 4567,1990-05-20,True,Nota de ejemplo
+```
+
+Para comprobar que el reset reinicia los IDs: 
+
+```bash 
+curl -s -X DELETE http://127.0.0.1:8000/personas/reset
+
+curl -s -X POST http://127.0.0.1:8000/personas/poblar \
+  -H 'Content-Type: applicaction/json' \
+  -d '{"cantidad":5}'
+
+curl -s http://127.0.0.1:8000/personas
+```
+
+Despues del reset, la nueva carga debe iniciar nuevamente desde `id = 1`.
+
+En Postman, recuerda que `GET /personas/exportar/csv` no necesita body en la petición. Para ver el archivo usa **Send and Download**, o revisa la respuesta descargada.
+
+
+## Validación sugerida en DBeaver
+
+```sql
+-- Verificar carga masiva 
+SELECT COUNT(*) FROM personas;
+
+
+-- Revisar que los dominios generados sean reales
+SELECT SUBSTRING_INDEX(email, '@', -1) AS dominio, COUNT(*) AS total
+FROM personas
+GROUP BY dominio;
+
+
+-- Verificar reset
+SELECT COUNT(*) FROM personas;
+```
+
+## Detener el servidor
 
 Campos expuestos:
 
