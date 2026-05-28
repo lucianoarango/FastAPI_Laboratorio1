@@ -1,9 +1,15 @@
 from typing import List
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..views.persona import PersonaCreate, PersonaUpdate, PersonaRead
+from ..views.persona import (
+    PersonaCreate, 
+    PersonaUpdate, 
+    PersonaRead,
+    PersonasPoblarRequest,
+    PersonasPoblarResponse,
+)
 from ..services import persona_service
 
 router = APIRouter(prefix="/personas", tags=["personas"])
@@ -24,6 +30,19 @@ def list_personas(
 ):
     """List Personas with pagination via service layer."""
     return persona_service.list_personas(db, skip=skip, limit=limit)
+
+
+@router.post("/poblar", response_model=PersonasPoblarResponse, status_code=status.HTTP_201_CREATED)
+def poblar_personas(payload: PersonasPoblarRequest, db: Session = Depends(get_db)):
+    """Create many 'Personas' using realistic Faker data."""
+    if payload.cantidad <= 0 or payload.cantidad > 1000:
+        raise HTTPException(status_code=400, detail="La cantidad debe ser un entero entre 1 y 1000.")
+    
+    created_count = persona_service.poblar_personas(db, payload.cantidad)
+    return {
+        "message": f"{created_count} usuarios creados exitosamente",
+        "status": status.HTTP_201_CREATED,
+    }
 
 
 @router.get("/{persona_id}", response_model=PersonaRead)
