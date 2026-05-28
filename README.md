@@ -160,6 +160,46 @@ curl -s -X DELETE http://127.0.0.1:8000/personas/reset
 - `DELETE /personas/reset`: elimina todos los registros de la tabla `personas` y retorna cuantas filas fueron borradas.
 - `GET /personas/exportar/csv`: descarga `personas.csv` con los campos `id`, `first_name`, `last_name`, `email`, `phone`, `birth_date`, `is_active` y `notes`.
 
+### Verificacion de CSV y reset
+
+Antes de exportar el CSV debe existir información en la tabla. Entonces primero puedes poblar algunos datos: 
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/personas/poblar \
+  -H 'Content-Type: application/json' \
+  -d '{"cantidad":10}'
+```
+
+Luego exporta el CSV: 
+
+```bash 
+curl -OJ http://127.0.0.1:8000/personas/exportar/csv
+```
+
+El archivo `personas.csv` debe incluir encabezados y registros:
+
+```csv
+id,first_name,last_name,email,phone,birth_date,is_active,notes
+1,Maria,Lopez,maria.lopez@gmail.com,+57  300 123 4567,1990-05-20,True,Nota de ejemplo
+```
+
+Para comprobar que el reset reinicia los IDs: 
+
+```bash 
+curl -s -X DELETE http://127.0.0.1:8000/personas/reset
+
+curl -s -X POST http://127.0.0.1:8000/personas/poblar \
+  -H 'Content-Type: applicaction/json' \
+  -d '{"cantidad":5}'
+
+curl -s http://127.0.0.1:8000/personas
+```
+
+Despues del reset, la nueva carga debe iniciar nuevamente desde `id = 1`.
+
+En Postman, recuerda que `GET /personas/exportar/csv` no necesita body en la petición. Para ver el archivo usa **Send and Download**, o revisa la respuesta descargada.
+
+
 ## Validación sugerida en DBeaver
 
 ```sql
