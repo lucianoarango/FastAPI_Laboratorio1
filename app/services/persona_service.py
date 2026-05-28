@@ -114,6 +114,11 @@ def poblar_personas(db: Session, cantidad: int) -> int:
     return len(personas)
     
 
+def reset_personas(db: Session) -> int:
+    """Delete every 'persona' record and return how many rows were removed."""
+    deleted_count = db.query(Persona).delete(synchronize_session=False)
+    db.commit()
+    return deleted_count
 
 
 def get_persona(db: Session, persona_id: int) -> Persona:
