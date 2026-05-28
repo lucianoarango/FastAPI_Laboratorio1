@@ -42,7 +42,7 @@ class PersonaRead(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
-
+    
 
 class PersonasPoblarRequest(BaseModel):
     """Request body for creating many 'Personas' with Faker-generated data."""
@@ -59,3 +59,38 @@ class PersonasResetResponse(BaseModel):
     """Response returned after deleting all 'personas' records."""
     message: str
     deleted_count: int
+
+
+class PersonaActivaRead(BaseModel):
+    """
+    Schema used for active users report responses.
+    Only exposes required fields for the report endpoint.
+    """
+
+    id: int
+    email: EmailStr
+    phone: str | None
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+    
+    
+class BulkDeactivateRequest(BaseModel):
+    """
+    Request schema for bulk deactivation endpoint.
+    """
+
+    ids: list[int]
+
+
+class BulkDeactivateResponse(BaseModel):
+    """
+    Response schema for bulk deactivation operation.
+    """
+
+    message: str
+    desactivados: list[int]
+    no_encontrados: list[int]
+    total_desactivados: int    
+
+

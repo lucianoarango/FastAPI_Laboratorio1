@@ -7,7 +7,7 @@ from io import StringIO
 from typing import Sequence
 
 from faker import Faker
-from sqlalchemy import text
+from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -153,42 +153,85 @@ def build_personas_csv(db: Session) -> StringIO:
     return output
 
 
+def search_personas(db: Session, termino: str):
+    """
+    Search personas by first name, last name or email.
 
-"""
-def get_personas_csv_rows(db: Session) -> list[tuple[object, ...]]:
-    Read 'Personas' from the database and prepare serializable CSV values.
-    personas = db.query(Persona).order_by(Persona.id).all()
-    return [
-        (
-            persona.id,
-            persona.first_name,
-            persona.last_name,
-            persona.email,
-            persona.phone or "",
-            persona.birth_date.isoformat() if persona.birth_date else "",
-            "True" if persona.is_active else "False",
-            persona.notes or "",
+    The search is case-insensitive and uses OR conditions,
+    allowing the term to match any of the three fields.
+    
+    """
+
+    # Search across multiple fields using OR
+    return (
+        db.query(Persona)
+        .filter(
+            or_(
+                Persona.first_name.ilike(f"%{termino}%"),
+                Persona.last_name.ilike(f"%{termino}%"),
+                Persona.email.ilike(f"%{termino}%")
+            )
         )
-        for persona in personas
+        .all()
+    )
+
+
+def get_active_personas_report(db: Session):
+    """
+    Return only active personas with reduced fields.
+
+    This endpoint is used as a lightweight report,
+    exposing only the required attributes.
+    """
+
+    return (
+        db.query(Persona)
+        .filter(Persona.is_active == True)
+        .all()
+    )
+
+
+def bulk_deactivate_personas(db: Session, ids: list[int]):
+    """
+    Deactivate multiple personas in a single operation.
+
+    The function:
+    - Validates existing IDs
+    - Deactivates only found personas
+    - Reports missing IDs without failing
+    """
+
+    # Get all personas that exist in database
+    personas = (
+        db.query(Persona)
+        .filter(Persona.id.in_(ids))
+        .all()
+    )
+
+    # Extract IDs that actually exist
+    found_ids = [persona.id for persona in personas]
+
+    # Identify IDs that were not found
+    not_found_ids = [
+        persona_id for persona_id in ids
+        if persona_id not in found_ids
     ]
 
-def iter_personas_csv(rows: Sequence[tuple[object, ...]]) -> Iterator[str]:
-    Stream prepared 'Persona' rows as CSV without depending on a live DB session.
-    buffer = StringIO()
-    writer = csv.writer(buffer)
+    # Deactivate found personas
+    for persona in personas:
+        persona.is_active = False
 
-    writer.writerow(CSV_COLUMNS)
-    yield buffer.getvalue()
-    buffer.seek(0)
-    buffer.truncate(0)
+    # Save changes in database
+    db.commit()
 
-    for row in rows: 
-        writer.writerow(row)
-        yield buffer.getvalue()
-        buffer.seek(0)
-        buffer.truncate(0)
+    # Return response structure
+    return {
+        "message": "Operación completada.",
+        "desactivados": found_ids,
+        "no_encontrados": not_found_ids,
+        "total_desactivados": len(found_ids)
+    }
 
-"""
 
 
 def get_persona(db: Session, persona_id: int) -> Persona:
@@ -230,3 +273,5 @@ def delete_persona(db: Session, persona_id: int) -> None:
         raise PersonaNotFoundError()
     db.delete(obj)
     db.commit()
+
+    

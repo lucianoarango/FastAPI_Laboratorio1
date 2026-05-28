@@ -5,13 +5,18 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..views.persona import (
-    PersonaCreate, 
-    PersonaUpdate, 
+    PersonaCreate,
+    PersonaUpdate,
     PersonaRead,
     PersonasPoblarRequest,
     PersonasPoblarResponse,
     PersonasResetResponse,
-)
+    PersonaActivaRead,
+    BulkDeactivateRequest,
+    BulkDeactivateResponse,
+) 
+
+# Import request and response schemas
 from ..services import persona_service
 
 router = APIRouter(prefix="/personas", tags=["personas"])
@@ -67,6 +72,57 @@ def exportar_personas_csv(db: Session = Depends(get_db)):
         media_type="text/csv",
         headers=headers,
     )
+
+
+@router.get("/buscar/{termino}", response_model=List[PersonaRead])
+def search_personas(termino: str, db: Session = Depends(get_db)):
+    """
+    Search personas by first name, last name or email.
+    """
+    
+    # Delegate search logic to service layer
+    return persona_service.search_personas(db, termino)
+
+
+@router.get("/reporte/activos", response_model=List[PersonaActivaRead])
+def get_active_personas_report(db: Session = Depends(get_db)):
+    """
+    Return a reduced report containing only active users.
+    """
+
+    # Delegate report logic to service layer
+    return persona_service.get_active_personas_report(db)
+
+
+@router.patch(
+    "/bulk/desactivar",
+    response_model=BulkDeactivateResponse
+)
+def bulk_deactivate_personas(
+    payload: BulkDeactivateRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Deactivate multiple personas in a single request.
+    """
+
+    # Validation: list cannot be empty
+    if not payload.ids:
+        raise HTTPException(
+            status_code=400,
+            detail="The ids list cannot be empty."
+        )
+
+    # Validation: maximum 100 IDs allowed
+    if len(payload.ids) > 100:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum 100 IDs are allowed."
+        )
+
+    # Delegate business logic to service layer
+    return persona_service.bulk_deactivate_personas(db, payload.ids)
+
 
 
 @router.get("/{persona_id}", response_model=PersonaRead)
