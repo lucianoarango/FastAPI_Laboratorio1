@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-
+from fastapi import HTTPException
 
 def obtener_estadisticas_dominios(db: Session):
     """
