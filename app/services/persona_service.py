@@ -83,6 +83,39 @@ def list_personas(db: Session, skip: int = 0, limit: int = 100) -> Sequence[Pers
     return db.query(Persona).offset(skip).limit(limit).all()
 
 
+def poblar_personas(db: Session, cantidad: int) -> int:
+    """Create many 'Personas' using Faker data and commit them in one trasaction."""
+    used_emails = {email for (email,) in db.query(Persona.email).all()}
+    personas: list[Persona] = []
+
+
+    for _ in range(cantidad):
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        personas.append(
+            Persona(
+                first_name=first_name,
+                last_name=last_name,
+                email=_build_unique_email(first_name, last_name, used_emails),
+                phone=_build_colombian_phone(),
+                birth_date=fake.date_of_birth(minimum_age=18, maximum_age=85),
+                is_active=random.choice((True, False)),
+                notes=random.choice((fake.sentence(nb_words=8), None)), 
+            )
+        )
+    
+    db.add_all(personas)
+    try:
+        db.commit()
+    except IntegrityError as e:
+        db.rollback()
+        raise EmailAlreadyExistsError() from e
+    
+    return len(personas)
+    
+
+
+
 def get_persona(db: Session, persona_id: int) -> Persona:
     """Return Persona by ID or raise if not found."""
     obj = db.query(Persona).filter(Persona.id == persona_id).first()
