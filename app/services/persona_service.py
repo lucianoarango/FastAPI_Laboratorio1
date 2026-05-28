@@ -121,6 +121,42 @@ def reset_personas(db: Session) -> int:
     return deleted_count
 
 
+def get_personas_csv_rows(db: Session) -> list[tuple[object, ...]]:
+    """Read 'Personas' from the database and prepare serializable CSV values."""
+    personas = db.query(Persona).order_by(Persona.id).all()
+    return [
+        (
+            persona.id,
+            persona.first_name,
+            persona.last_name,
+            persona.email,
+            persona.phobe or "",
+            persona.birth_date.isoformat() if persona.birth_date else "",
+            str(persona.is_active).lower(),
+            persona.notes or "",
+        )
+        for persona in personas
+    ]
+
+def iter_personas_csv(rows: Sequence[tuple[object, ...]]) -> Iterator[str]:
+    """Stream prepared 'Persona' rows as CSV without depending on a live DB session."""
+    buffer = StringIO()
+    writer = csv.writer(buffer)
+
+    writer.writerow(CSV_COLUMNS)
+    yield buffer.getvalue()
+    buffer.seek(0)
+    buffer.truncate(0)
+
+    for row in rows: 
+        writer.writerow(row)
+        yield buffer.getvalue()
+        buffer.seek(0)
+        buffer.truncate(0)
+
+
+
+
 def get_persona(db: Session, persona_id: int) -> Persona:
     """Return Persona by ID or raise if not found."""
     obj = db.query(Persona).filter(Persona.id == persona_id).first()
