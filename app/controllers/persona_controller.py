@@ -6,8 +6,10 @@ from ..views.persona import (
     PersonaCreate,
     PersonaUpdate,
     PersonaRead,
-    PersonaActivaRead
-) # Import reduced response schema for active users report, that's "PersonaActivaRead"
+    PersonaActivaRead,
+    BulkDeactivateRequest,
+    BulkDeactivateResponse
+) # Validation services
 from ..services import persona_service
 
 router = APIRouter(prefix="/personas", tags=["personas"])
