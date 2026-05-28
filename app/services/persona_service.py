@@ -7,6 +7,7 @@ from io import StringIO
 from typing import Sequence
 
 from faker import Faker
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -115,8 +116,13 @@ def poblar_personas(db: Session, cantidad: int) -> int:
     
 
 def reset_personas(db: Session) -> int:
-    """Delete every 'persona' record and return how many rows were removed."""
+    """Delete every 'persona' record, reset MySQL auto-increment and return deleted rows."""
     deleted_count = db.query(Persona).delete(synchronize_session=False)
+
+    # MySQL doesn't reset AUTO_INCREMENT afer DELETE, so the next insert would continue
+    # from the previous highest id. This makes the lab restart cleanly from id 1.
+    db.execute(text("ALTER TABLE personas AUTO_INCREMENT = 1"))
+    
     db.commit()
     return deleted_count
 
