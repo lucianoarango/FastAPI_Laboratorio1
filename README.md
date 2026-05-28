@@ -2,13 +2,21 @@
 
 Proyecto de insersión y consultas con endpoints, usando debidamente FastAPI + SQLAlchemy y estructura MVC para un CRUD de `Persona`. Dicho proyecto usa MySQL por defecto y permite apuntar a otra base SQL mediante la variable de entorno `DATABASE_URL` (configurable en `.env`).
 
-## Requisitos/ Herramientas de trabajo
+# Requisitos/ Herramientas de trabajo
 
 - Python 3.10+ (recomendado 3.12)
+- FastAPI
+- SQLAlchemy
+- MySQL
+- PyMySQL
+- Postman
+- DBeaver
 
-## Instalación y ejecución
+---
 
-1. Crear entorno virtual e instalar dependencias:
+# Instalación y ejecución
+
+## 1. Crear entorno virtual e instalar dependencias:
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate # macOS / Linux
@@ -16,16 +24,17 @@ Proyecto de insersión y consultas con endpoints, usando debidamente FastAPI + S
    pip install -r requirements.txt
    ```
 
-2. Configurar variables de entorno:
+## 2. Configurar variables de entorno:
    ```bash
    cp .env.example .env
    # Edita .env con tus credenciales de MySQL
    # Normalmente están configuradas así: DATABASE_URL=mysql+pymysql://user:password@localhost:3306/fastapi_demo
    ```
 
-3. Ejecutar el servidor o encender la API:
+## 3. Ejecutar el servidor o encender la API:
    ```bash
    uvicorn app.main:app --reload
+   ```
 
 ## Conexión a otras bases de datos
 
@@ -37,7 +46,19 @@ Edita `DATABASE_URL` en el archivo `.env`.
 ```env
 DATABASE_URL=mysql+pymysql://usuario:contraseña@localhost:3306/nombre_basedatos
 
-# ENDPOINTS PRINCIPALES TRABAJADOS EN ESTE PROYECTO.
+```
+# Arquitectura MVC
+
+| Directorio | Componente MVC | Tecnología | Descripción |
+| :--- | :--- | :--- | :--- |
+| `app/models/` | **Modelo** | SQLAlchemy | Modelos de la base de datos y mapeo ORM. |
+| `app/views/` | **Vista** | Pydantic | Esquemas de datos, serialización y validaciones. |
+| `app/controllers/` | **Controlador** | FastAPI | Rutas, endpoints y gestión de peticiones. |
+| `app/services/` | **Lógica** | Python Puro | Servicios y reglas de negocio del sistema. |
+
+
+
+#  ENDPOINTS PRINCIPALES TRABAJADOS EN ESTE PROYECTO.
 
 # Endpoints Implementados — Marco Peñate
 
