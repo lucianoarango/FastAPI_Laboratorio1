@@ -132,7 +132,7 @@ def get_personas_csv_rows(db: Session) -> list[tuple[object, ...]]:
             persona.email,
             persona.phobe or "",
             persona.birth_date.isoformat() if persona.birth_date else "",
-            str(persona.is_active).lower(),
+            "True" if persona.is_active else "False",
             persona.notes or "",
         )
         for persona in personas
