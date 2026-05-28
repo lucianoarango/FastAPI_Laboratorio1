@@ -42,3 +42,20 @@ class PersonaRead(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PersonasPoblarRequest(BaseModel):
+    """Request body for creating many 'Personas' with Faker-generated data."""
+    cantidad: int = Field(..., description="Number of 'personas' to generate. Valid Range: 1 to 1000.")
+
+
+class PersonasPoblarResponse(BaseModel):
+    """Response returned after the massive Faker load finishes."""
+    message: str
+    status: int
+
+
+class PersonasResetResponse(BaseModel):
+    """Response returned after deleting all 'personas' records."""
+    message: str
+    deleted_count: int
