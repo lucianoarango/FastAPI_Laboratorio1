@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -54,6 +55,17 @@ def reset_personas(db: Session = Depends(get_db)):
         "message": "Base de datos limpiada. Se eliminaron todos los registros.",
         "deleted_count": deleted_count,
     }
+
+
+@router.get("/exportar/csv")
+def exportar_personas_csv(db: Session = Depends(get_db)):
+    """Download every 'Persona' record as a CSV file for Excel, Pandas or terminal review."""
+    headers = {"Content-Disposition": 'attachment; filename="personas.csv"'}
+    return StreamingResponse(
+        persona_service.iter_personas_csv(db),
+        media_type="text/csv",
+        headers=headers,
+    )
 
 
 @router.get("/{persona_id}", response_model=PersonaRead)
