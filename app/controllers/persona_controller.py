@@ -9,7 +9,7 @@ from ..views.persona import (
     PersonaActivaRead,
     BulkDeactivateRequest,
     BulkDeactivateResponse
-) # Validation services
+) # Import request and response schemas
 from ..services import persona_service
 
 router = APIRouter(prefix="/personas", tags=["personas"])
@@ -50,6 +50,39 @@ def get_active_personas_report(db: Session = Depends(get_db)):
 
     # Delegate report logic to service layer
     return persona_service.get_active_personas_report(db)
+
+
+@router.patch(
+    "/bulk/desactivar",
+    response_model=BulkDeactivateResponse
+)
+def bulk_deactivate_personas(
+    payload: BulkDeactivateRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Deactivate multiple personas in a single request.
+    """
+
+    # Validation: list cannot be empty
+    if not payload.ids:
+        raise HTTPException(
+            status_code=400,
+            detail="The ids list cannot be empty."
+        )
+
+    # Validation: maximum 100 IDs allowed
+    if len(payload.ids) > 100:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum 100 IDs are allowed."
+        )
+
+    # Delegate business logic to service layer
+    return persona_service.bulk_deactivate_personas(
+        db,
+        payload.ids
+    )
 
 
 @router.get("/{persona_id}", response_model=PersonaRead)
