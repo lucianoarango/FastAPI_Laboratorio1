@@ -60,10 +60,10 @@ def reset_personas(db: Session = Depends(get_db)):
 @router.get("/exportar/csv")
 def exportar_personas_csv(db: Session = Depends(get_db)):
     """Download every 'Persona' record as a CSV file for Excel, Pandas or terminal review."""
-    rows = persona_service.get_personas_csv_rows(db)
+    csv_file = persona_service.build_personas_csv(db)
     headers = {"Content-Disposition": 'attachment; filename="personas.csv"'}
     return StreamingResponse(
-        persona_service.iter_personas_csv(db),
+        csv_file,
         media_type="text/csv",
         headers=headers,
     )

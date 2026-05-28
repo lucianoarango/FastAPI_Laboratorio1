@@ -127,8 +127,36 @@ def reset_personas(db: Session) -> int:
     return deleted_count
 
 
+def build_personas_csv(db: Session) -> StringIO:
+    """Build a complete CSV file with all 'Persona' records."""
+    output = StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(CSV_COLUMNS)
+
+    personas = db.query(Persona).order_by(Persona.id).all()
+    for persona in personas:
+        writer.writerow(
+            [
+                persona.id,
+                persona.first_name,
+                persona.last_name,
+                persona.email,
+                persona.phone or "",
+                persona.birth_date.isoformat() if persona.birth_date else "",
+                "True" if persona.is_active else "False",
+                persona.notes or "",
+            ]
+        )
+    
+    output.seek(0)
+    return output
+
+
+
+"""
 def get_personas_csv_rows(db: Session) -> list[tuple[object, ...]]:
-    """Read 'Personas' from the database and prepare serializable CSV values."""
+    Read 'Personas' from the database and prepare serializable CSV values.
     personas = db.query(Persona).order_by(Persona.id).all()
     return [
         (
@@ -136,7 +164,7 @@ def get_personas_csv_rows(db: Session) -> list[tuple[object, ...]]:
             persona.first_name,
             persona.last_name,
             persona.email,
-            persona.phobe or "",
+            persona.phone or "",
             persona.birth_date.isoformat() if persona.birth_date else "",
             "True" if persona.is_active else "False",
             persona.notes or "",
@@ -145,7 +173,7 @@ def get_personas_csv_rows(db: Session) -> list[tuple[object, ...]]:
     ]
 
 def iter_personas_csv(rows: Sequence[tuple[object, ...]]) -> Iterator[str]:
-    """Stream prepared 'Persona' rows as CSV without depending on a live DB session."""
+    Stream prepared 'Persona' rows as CSV without depending on a live DB session.
     buffer = StringIO()
     writer = csv.writer(buffer)
 
@@ -160,7 +188,7 @@ def iter_personas_csv(rows: Sequence[tuple[object, ...]]) -> Iterator[str]:
         buffer.seek(0)
         buffer.truncate(0)
 
-
+"""
 
 
 def get_persona(db: Session, persona_id: int) -> Persona:
