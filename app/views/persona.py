@@ -56,3 +56,22 @@ class PersonaActivaRead(BaseModel):
     is_active: bool
 
     model_config = {"from_attributes": True}
+    
+    
+class BulkDeactivateRequest(BaseModel):
+    """
+    Request schema for bulk deactivation endpoint.
+    """
+
+    ids: list[int]
+
+
+class BulkDeactivateResponse(BaseModel):
+    """
+    Response schema for bulk deactivation operation.
+    """
+
+    message: str
+    desactivados: list[int]
+    no_encontrados: list[int]
+    total_desactivados: int    
