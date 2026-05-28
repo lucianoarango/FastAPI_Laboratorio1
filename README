@@ -1,3 +1,44 @@
+# FastAPI Persona CRUD: LABORATORIO 1
+
+Proyecto de insersión y consultas con endpoints, usando debidamente FastAPI + SQLAlchemy y estructura MVC para un CRUD de `Persona`. Dicho proyecto usa MySQL por defecto y permite apuntar a otra base SQL mediante la variable de entorno `DATABASE_URL` (configurable en `.env`).
+
+## Requisitos/ Herramientas de trabajo
+
+- Python 3.10+ (recomendado 3.12)
+
+## Instalación y ejecución
+
+1. Crear entorno virtual e instalar dependencias:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate # macOS / Linux
+   .venv\Scripts\activate # Windows
+   pip install -r requirements.txt
+   ```
+
+2. Configurar variables de entorno:
+   ```bash
+   cp .env.example .env
+   # Edita .env con tus credenciales de MySQL
+   # Normalmente están configuradas así: DATABASE_URL=mysql+pymysql://user:password@localhost:3306/fastapi_demo
+   ```
+
+3. Ejecutar el servidor o encender la API:
+   ```bash
+   uvicorn app.main:app --reload
+
+## Conexión a otras bases de datos
+
+Edita `DATABASE_URL` en el archivo `.env`.
+- MySQL: `mysql+pymysql://user:password@localhost:3306/mydb` 
+
+## Ejemplo de `.env` (MySQL local)
+
+```env
+DATABASE_URL=mysql+pymysql://usuario:contraseña@localhost:3306/nombre_basedatos
+
+# ENDPOINTS PRINCIPALES TRABAJADOS EN ESTE PROYECTO.
+
 # Endpoints Implementados — Marco Peñate
 
 Durante el desarrollo del laboratorio se implementaron nuevos endpoints analíticos y operacionales sobre el modelo `Persona`, manteniendo la arquitectura MVC propuesta inicialmente en el proyecto.
