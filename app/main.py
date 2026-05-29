@@ -43,3 +43,5 @@ def estadisticas_edad(db: Session = Depends(get_db)):
 @app.get("/personas/cumpleanios/mes/{numero_mes}", tags=["Analítica Iván"])
 def cumpleanos_mes(numero_mes: str, db: Session= Depends(get_db)):
     return analitica_controller.obtener_cumpleanos_mes(numero_mes, db)
+
+
