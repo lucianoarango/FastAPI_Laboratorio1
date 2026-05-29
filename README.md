@@ -2,6 +2,8 @@
 
 Proyecto de insersión y consultas con endpoints, usando debidamente FastAPI + SQLAlchemy y estructura MVC para un CRUD de `Persona`. Dicho proyecto usa MySQL por defecto y permite apuntar a otra base SQL mediante la variable de entorno `DATABASE_URL` (configurable en `.env`).
 
+El proyecto conserva los endpoints originales del CRUD y agrega los 9 endpoints solicitados en el laboratorio.
+
 # Requisitos/ Herramientas de trabajo
 
 - Python 3.10+ (recomendado 3.12)
@@ -31,10 +33,29 @@ Proyecto de insersión y consultas con endpoints, usando debidamente FastAPI + S
    # Normalmente están configuradas así: DATABASE_URL=mysql+pymysql://user:password@localhost:3306/fastapi_demo
    ```
 
-## 3. Ejecutar el servidor o encender la API:
+## 3. Crear/verificar la base de datos:
+   ```bash
+   python scripts/init_db.py
+   ```
+
+## 4. Ejecutar el servidor o encender la API:
    ```bash
    uvicorn app.main:app --reload
    ```
+
+## 6. Abrir Swagger:
+Estos endpoints se pueden probar facilmente desde Swagger:
+
+   ```text
+   http://127.0.0.1:8000/docs#/
+   ```
+
+En Swagger puedes buscar:
+
+- `GET /personas/estadisticas/dominios`
+- `GET /personas/estadisticas/edad`
+- `GET /personas/cumpleanios/mes/{numero_mes}`
+
 
 ## Conexión a otras bases de datos
 
@@ -60,112 +81,54 @@ DATABASE_URL=mysql+pymysql://usuario:contraseña@localhost:3306/nombre_basedatos
 
 #  ENDPOINTS PRINCIPALES TRABAJADOS EN ESTE PROYECTO.
 
-# Endpoints Implementados — Marco Peñate
+## Endpoints desarrollados por integrante
 
-Durante el desarrollo del laboratorio se implementaron nuevos endpoints analíticos y operacionales sobre el modelo `Persona`, manteniendo la arquitectura MVC propuesta inicialmente en el proyecto.
+El laboratorio fue dividido por integrante para implementar los 9 nuevos endpoints solicitados, manteniendo intactos los endpoints originales del CRUD.
 
-Los endpoints desarrollados fueron implementados siguiendo la separación de responsabilidades entre:
+### Luciano Arango - Operaciones masivas y exportacion
 
-* Controllers (manejo de rutas HTTP)
-* Services (lógica de negocio)
-* Views/Schemas (validación y serialización)
-* Models (estructura de base de datos)
+Luciano desarrollo los endpoints relacionados con carga masiva de datos, limpieza de la tabla y exportacion de informacion.
 
-Además, todas las pruebas fueron verificadas mediante:
+- `POST /personas/poblar`: crea una cantidad determinada de personas usando Faker. Genera nombres, apellidos, correos con dominios reales, telefonos, fechas de nacimiento, estado activo/inactivo y notas.
+- `DELETE /personas/reset`: elimina todos los registros de la tabla `personas` y reinicia el contador de IDs para que una nueva carga empiece desde `id = 1`.
+- `GET /personas/exportar/csv`: exporta todos los registros de la tabla en formato CSV descargable, incluyendo `id`, `first_name`, `last_name`, `email`, `phone`, `birth_date`, `is_active` y `notes`.
 
-* Swagger UI
-* Postman
-* Base de datos MySQL (DBeaver)
+### Ivan - Analitica y filtros por fecha
 
----
+Ivan desarrollo los endpoints de analitica sobre los datos registrados y el filtro de cumpleanios por mes.
 
-# Endpoint E — Buscador General
+- `GET /personas/estadisticas/dominios`: agrupa las personas por dominio de correo y retorna la cantidad registrada por cada proveedor, por ejemplo `gmail.com`, `outlook.com` o `hotmail.com`.
+- `GET /personas/estadisticas/edad`: calcula estadisticas de edad usando el campo `birth_date`, retornando edad promedio, edad minima y edad maxima.
+- `GET /personas/cumpleanios/mes/{numero_mes}`: retorna las personas que cumplen anios en el mes indicado. El parametro `numero_mes` debe estar entre `1` y `12`; si no cumple la validacion, retorna `400 Bad Request`.
 
-## Descripción
+Estos endpoints se pueden probar facilmente desde Swagger:
 
-Permite realizar búsquedas dinámicas sobre los campos:
-
-* `first_name`
-* `last_name`
-* `email`
-
-La búsqueda utiliza:
-
-* operador SQL `OR`
-* coincidencias parciales (`ILIKE`)
-* búsqueda case-insensitive
-
-## Ruta
-
-```http
-GET /personas/buscar/{termino}
+```text
+http://127.0.0.1:8000/docs#/
 ```
 
-## Ejemplo
+En Swagger puedes buscar:
 
-```bash
-curl -X GET "http://127.0.0.1:8000/personas/buscar/lopez"
-```
+- `GET /personas/estadisticas/dominios`
+- `GET /personas/estadisticas/edad`
+- `GET /personas/cumpleanios/mes/{numero_mes}`
 
-## Respuesta esperada
+### Marco Penate - Busqueda, reportes y desactivacion masiva
 
-```json
-[
-  {
-    "id": 1,
-    "first_name": "Maria",
-    "last_name": "Lopez",
-    "email": "maria@gmail.com",
-    "phone": "+57 3001112233",
-    "birth_date": "1998-05-10",
-    "is_active": true,
-    "notes": "Cliente frecuente",
-    "created_at": "2026-05-27T03:40:17.292Z"
-  }
-]
-```
+Marco desarrollo los endpoints de busqueda general, reporte de usuarios activos y desactivacion masiva.
 
----
+- `GET /personas/buscar/{termino}`: busca el termino recibido en los campos `first_name`, `last_name` o `email`, retornando todas las coincidencias encontradas.
+- `GET /personas/reporte/activos`: retorna un reporte reducido solo con las personas activas, mostrando unicamente `id`, `email`, `phone` e `is_active`.
+- `PATCH /personas/bulk/desactivar`: recibe una lista de IDs y desactiva las personas existentes, marcando `is_active = false`. Si algunos IDs no existen, no falla la operacion y los reporta en `no_encontrados`.
 
-# Endpoint F — Reporte de Activos
+## Resumen de responsabilidades
 
-## Descripción
+| Integrante | Endpoints desarrollados |
+| --- | --- |
+| Luciano Arango | `POST /personas/poblar`, `DELETE /personas/reset`, `GET /personas/exportar/csv` |
+| Ivan | `GET /personas/estadisticas/dominios`, `GET /personas/estadisticas/edad`, `GET /personas/cumpleanios/mes/{numero_mes}` |
+| Marco Penate | `GET /personas/buscar/{termino}`, `GET /personas/reporte/activos`, `PATCH /personas/bulk/desactivar` |
 
-Retorna únicamente usuarios activos (`is_active = true`) usando una proyección reducida para optimizar la respuesta.
-## Endpoints principales
-
-- `GET /health` → estado del servicio
-- `POST /personas` → crear persona
-- `GET /personas` → listar personas (`skip`, `limit`)
-- `GET /personas/{id}` → obtener persona por ID
-- `PUT /personas/{id}` → actualizar (parcial) persona
-- `DELETE /personas/{id}` → eliminar persona
-- `POST /personas/poblar` → crear personas masivamente con Faker
-- `DELETE /personas/reset` → eliminar todos los registros de personas
-- `GET /personas/exportar/csv` → descargar todos los registros en CSV
-
-### Esquemas (JSON)
-
-- Crear:
-  ```json
-  {
-    "first_name": "Juan",
-    "last_name": "Pérez",
-    "email": "juan.perez@example.com",
-    "phone": "+57 3000000000",
-    "birth_date": "1990-05-20",
-    "is_active": true,
-    "notes": "Cliente frecuente"
-  }
-  ```
-
-- Actualizar (parcial):
-  ```json
-  {
-    "email": "juan.perez2@example.com",
-    "notes": "Actualizado"
-  }
-  ```
 
 ## Colección de Postman
 
@@ -242,69 +205,6 @@ curl -s -X DELETE http://127.0.0.1:8000/personas/reset
 ```
 
 
-## Endpoints desarrollados por Luciano 
-
-- `POST /personas/poblar`: recibe `{"cantidad": 50}` y crea entre 1 y 1000 personas usando Faker. Los correos se generan con dominios reales como `gmail.com`, `outlook.com`, `hotmail.com` y `yahoo.com`.
-- `DELETE /personas/reset`: elimina todos los registros de la tabla `personas` y retorna cuantas filas fueron borradas.
-- `GET /personas/exportar/csv`: descarga `personas.csv` con los campos `id`, `first_name`, `last_name`, `email`, `phone`, `birth_date`, `is_active` y `notes`.
-
-### Verificacion de CSV y reset
-
-Antes de exportar el CSV debe existir información en la tabla. Entonces primero puedes poblar algunos datos: 
-
-```bash
-curl -s -X POST http://127.0.0.1:8000/personas/poblar \
-  -H 'Content-Type: application/json' \
-  -d '{"cantidad":10}'
-```
-
-Luego exporta el CSV: 
-
-```bash 
-curl -OJ http://127.0.0.1:8000/personas/exportar/csv
-```
-
-El archivo `personas.csv` debe incluir encabezados y registros:
-
-```csv
-id,first_name,last_name,email,phone,birth_date,is_active,notes
-1,Maria,Lopez,maria.lopez@gmail.com,+57  300 123 4567,1990-05-20,True,Nota de ejemplo
-```
-
-Para comprobar que el reset reinicia los IDs: 
-
-```bash 
-curl -s -X DELETE http://127.0.0.1:8000/personas/reset
-
-curl -s -X POST http://127.0.0.1:8000/personas/poblar \
-  -H 'Content-Type: applicaction/json' \
-  -d '{"cantidad":5}'
-
-curl -s http://127.0.0.1:8000/personas
-```
-
-Despues del reset, la nueva carga debe iniciar nuevamente desde `id = 1`.
-
-En Postman, recuerda que `GET /personas/exportar/csv` no necesita body en la petición. Para ver el archivo usa **Send and Download**, o revisa la respuesta descargada.
-
-
-## Validación sugerida en DBeaver
-
-```sql
--- Verificar carga masiva 
-SELECT COUNT(*) FROM personas;
-
-
--- Revisar que los dominios generados sean reales
-SELECT SUBSTRING_INDEX(email, '@', -1) AS dominio, COUNT(*) AS total
-FROM personas
-GROUP BY dominio;
-
-
--- Verificar reset
-SELECT COUNT(*) FROM personas;
-```
-
 ## Detener el servidor
 
 Campos expuestos:
@@ -314,87 +214,6 @@ Campos expuestos:
 * `phone`
 * `is_active`
 
-## Ruta
-
-```http
-GET /personas/reporte/activos
-```
-
-## Ejemplo
-
-```bash
-curl -X GET "http://127.0.0.1:8000/personas/reporte/activos"
-```
-
-## Respuesta esperada
-
-```json
-[
-  {
-    "id": 1,
-    "email": "maria@gmail.com",
-    "phone": "+57 3001112233",
-    "is_active": true
-  }
-]
-```
-
----
-
-# Endpoint H — Desactivación Masiva
-
-## Descripción
-
-Permite desactivar múltiples usuarios en una sola operación mediante una lista de IDs.
-
-El endpoint:
-
-* desactiva únicamente IDs existentes
-* ignora IDs inexistentes sin detener la operación
-* reporta qué registros no fueron encontrados
-
-## Validaciones implementadas
-
-* La lista no puede estar vacía
-* Máximo 100 IDs por solicitud
-* Respuesta HTTP 400 en validaciones inválidas
-
-## Ruta
-
-```http
-PATCH /personas/bulk/desactivar
-```
-
-## Request Body
-
-```json
-{
-  "ids": [1, 2, 5, 999]
-}
-```
-
-## Ejemplo
-
-```bash
-curl -X PATCH "http://127.0.0.1:8000/personas/bulk/desactivar" \
--H "Content-Type: application/json" \
--d '{
-  "ids": [1,2,5,999]
-}'
-```
-
-## Respuesta esperada
-
-```json
-{
-  "message": "Operación completada.",
-  "desactivados": [1,2,5],
-  "no_encontrados": [999],
-  "total_desactivados": 3
-}
-```
-
----
 
 # Tecnologías Utilizadas
 
@@ -408,26 +227,6 @@ curl -X PATCH "http://127.0.0.1:8000/personas/bulk/desactivar" \
 * DBeaver
 * Python 3.11
 
----
-
-# Validaciones Aplicadas
-
-## Buscador General
-
-* búsqueda parcial
-* búsqueda en múltiples campos
-
-## Reporte de Activos
-
-* filtrado exclusivo de usuarios activos
-* reducción de datos retornados
-
-## Desactivación Masiva
-
-* máximo 100 IDs
-* validación de lista vacía
-* manejo de IDs inexistentes
-* actualización masiva de registros
 
 ---
 
@@ -444,6 +243,4 @@ Los códigos HTTP esperados fueron validados:
 * `200 OK`
 * `201 Created`
 * `400 Bad Request`
-## Responsabilidades del Equipo
 
-- **Iván Durango:** Desarrollo del Bloque B (Analítica). Endpoints de estadísticas por dominio, edad y filtro de cumpleaños. Implementación de patrón Service Layer.
