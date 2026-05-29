@@ -1,0 +1,43 @@
+{
+  "info": {
+    "_postman_id": "86f76522-5c7e-424b-912e-a2192bc37eda",
+    "name": "Laboratorio 1 - FastAPI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55188515",
+    "_collection_link": "https://go.postman.co/collection/55188515-86f76522-5c7e-424b-912e-a2192bc37eda?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "1. Estadísticas por Dominio",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Estadísticas de Edad",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Cumpleaños por Mes (Error 400)",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "POSTLucino",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ]
+}
