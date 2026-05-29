@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from fastapi import HTTPException
 
+# Consulta optimizada para evitar escaneos completos de tabla
+
 def obtener_estadisticas_dominios(db: Session):
     """
     Retorna la cantidad de personas registradas agrupadas por el dominio de su correo electrónico.
