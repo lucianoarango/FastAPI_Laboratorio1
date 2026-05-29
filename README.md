@@ -444,3 +444,6 @@ Los códigos HTTP esperados fueron validados:
 * `200 OK`
 * `201 Created`
 * `400 Bad Request`
+## Responsabilidades del Equipo
+
+- **Iván Durango:** Desarrollo del Bloque B (Analítica). Endpoints de estadísticas por dominio, edad y filtro de cumpleaños. Implementación de patrón Service Layer.
