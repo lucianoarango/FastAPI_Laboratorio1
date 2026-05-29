@@ -1,0 +1,314 @@
+{
+  "info": {
+    "_postman_id": "ef6e6290-da20-406c-9521-310a4a4bae35",
+    "name": "LABORTARIO1: GRUPO 2. Demo FastAPI CRUD.colection_postman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55101094",
+    "_collection_link": "https://go.postman.co/collection/55101094-ef6e6290-da20-406c-9521-310a4a4bae35?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "HEALTH/estado_del_sistema",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/health",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/reporte/activos",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/reporte/activos",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "reporte",
+            "activos"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/bulk/desactivar",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ids\": [\n    1,2,6, 999\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/bulk/desactivar",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "bulk",
+            "desactivar"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/poblar",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cantidad\": 50\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/poblar",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "poblar"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/reset",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/reset",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "reset"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/estadisticas/dominios",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/estadisticas/dominios",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "estadisticas",
+            "dominios"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/estadisticas/edad",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/estadisticas/edad",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "estadisticas",
+            "edad"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/buscar/{termino}",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/buscar/lopez",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "buscar",
+            "lopez"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/cumpleanios/mes/{numero_mes}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/cumpleanios/mes/4",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "cumpleanios",
+            "mes",
+            "4"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "/personas/exportar/csv",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8000/personas/exportar/csv",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "personas",
+            "exportar",
+            "csv"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
